@@ -79,6 +79,39 @@ export default function Amethyst() {
             gap: '8px',
             boxShadow: '0 -10px 25px rgba(0,0,0,0.5)'
         },
+        memoryCard: {
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '20px',
+            padding: '15px',
+            marginBottom: '25px',
+            border: '1px dashed rgba(168, 85, 247, 0.5)',
+        },
+        imagePlaceholder: {
+            width: '100%',
+            height: '200px',
+            backgroundColor: '#2D1B4D',
+            borderRadius: '15px',
+            marginTop: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            border: '2px solid #4c1d95'
+        },
+        goalList: {
+            display: 'flex',
+            flexDirection: 'column' as 'column',
+            gap: '12px',
+        },
+        goalItem: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontSize: '15px',
+            background: 'rgba(147, 51, 234, 0.1)',
+            padding: '10px 15px',
+            borderRadius: '15px',
+        },
         topRow: {
             display: 'flex',
             justifyContent: 'space-between',
@@ -390,7 +423,7 @@ export default function Amethyst() {
             }}
             >
             Made with 💜 for Amethyst
-            </motion.footer>
+                </motion.footer>
             </motion.div>
         )}
 
@@ -402,7 +435,7 @@ export default function Amethyst() {
             >
             {/* PAST: MEMORY */}
             <div style={{ marginBottom: '30px' }}>
-            
+
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#d8b4fe', margin: '0 0 15px 0' }}>
             <Camera size={20} /> Our Beginning
             </h3>
