@@ -230,30 +230,11 @@ function SoundButton() {
   const [audio, setAudio] = useState<THREE.Audio | null>(null);
   const [showMsg, setShowMsg] = useState<boolean>(false);
   const [message, setMessage] = useState("");
-  const text = "   Merry Christmas, my Amethyst 🎄. I will always love you forever, in the quiet and certain way that never fades. You are always in my thoughts, especially during moments like this. I truly hope that next year, we get to celebrate Christmas together. Even if it’s simple, being with you would be more than enough.   ";
+  const text =
+    "   Merry Christmas, my Amethyst . I will always love you forever, in the quiet and certain way that never fades. You are always in my thoughts, especially during moments like this. I truly hope that next year, we get to celebrate Christmas together. Even if it�s simple, being with you would be more than enough.   ";
+
+  // Create and load audio only once
   useEffect(() => {
-    if(showMsg) {
-    let isCancelled = false;
-
-    const typeText = async () => {
-      let i = 0;
-      while (i < text.length - 3 && !isCancelled) {
-        setMessage(prev => prev + text[i]);
-        i++;
-        await new Promise(resolve => setTimeout(resolve, 37)); // 100ms delay
-      }
-    };
-
-    typeText();
-
-    return () => {
-      isCancelled = true; // cleanup if component unmounts
-    };
-    }
-  }, [showMsg]);
-
-
-  if (!audio) {
     const listener = new THREE.AudioListener();
     camera.add(listener);
     const sound = new THREE.Audio(listener);
@@ -262,16 +243,62 @@ function SoundButton() {
       sound.setBuffer(buffer);
       sound.setLoop(false);
       sound.setVolume(0.9);
+      setAudio(sound); // now the audio is ready
     });
-    setAudio(sound);
-  }
+  }, [camera]);
+
+  // Typing effect
+  useEffect(() => {
+    if (!showMsg) return;
+    let isCancelled = false;
+
+    const typeText = async () => {
+      let i = 0;
+      while (i < text.length && !isCancelled) {
+        setMessage((prev) => prev + text[i]);
+        i++;
+        await new Promise((resolve) => setTimeout(resolve, 37));
+      }
+    };
+
+    typeText();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [showMsg]);
 
   const handleClick = () => {
     if (audio && !audio.isPlaying) {
       audio.play();
       setShowMsg(true);
-    } 
+    } else if (!audio) {
+      // Audio not ready yet, just wait for it to load
+      console.log("Audio loading, please click again in a second...");
+    }
   };
+
+  return (
+    <>
+      <group>
+        <mesh position={[0, -0.5, 2]} scale={[1.2, 0.4, 0.2]} onClick={handleClick}>
+          <boxGeometry args={[1, 0.3, 0.2]} />
+          <meshStandardMaterial color="#ff69b4" />
+        </mesh>
+
+        <Text position={[0, -0.48, 2.11]} fontSize={0.1} color="#fff" anchorX="center" anchorY="middle">
+          Click Here!
+        </Text>
+      </group>
+
+      {showMsg && (
+        <Text textAlign="left" maxWidth={4.5} fontSize={0.26}>
+          {message}
+        </Text>
+      )}
+    </>
+  );
+}
 
   return (
     <>
