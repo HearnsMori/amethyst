@@ -8,7 +8,7 @@ import * as THREE from "three";
    SNOW PARTICLES (AIR)
 ===================== */
 function SnowParticles() {
-  const ref = useRef<any>();
+  const ref = useRef<any>(null);
   const count = 1200;
 
   const positions = useMemo(() => {
@@ -61,7 +61,7 @@ function SnowGround() {
    CAT (CUSTOM GEOMETRY)
 ===================== */
 function Cat() {
-  const head = useRef<any>();
+  const head = useRef<any>(null);
   const eyes = useRef<any>([]);
 
   useFrame(({ clock }) => {
@@ -179,7 +179,7 @@ function DreamHouse() {
    FIREWORKS
 ===================== */
 function Fireworks() {
-  const ref = useRef<any>();
+  const ref = useRef<any>(null);
   const count = 300;
 
   const positions = useMemo(() => {
