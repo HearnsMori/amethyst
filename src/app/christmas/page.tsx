@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
-import { useRef<any>, useMemo, useState } from "react";
+import { useRef, useMemo, useState } from "react";
 import * as THREE from "three";
 /* =====================
    SNOW PARTICLES (AIR)
