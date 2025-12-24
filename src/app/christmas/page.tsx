@@ -2,8 +2,10 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
+import {motion} from "framer-motion";
 import * as THREE from "three";
+
 
 /* =====================
    SNOW PARTICLES (AIR)
@@ -226,6 +228,30 @@ function Scene() {
 function SoundButton() {
   const { camera } = useThree();
   const [audio, setAudio] = useState<THREE.Audio | null>(null);
+  const [showMsg, setShowMsg] = useState<boolean>(false);
+  const [message, setMessage] = useState("");
+  const text = "   Merry Christmas, my Amethyst 🎄. I will always love you forever, in the quiet and certain way that never fades. You are always in my thoughts, especially during moments like this. I truly hope that next year, we get to celebrate Christmas together. Even if it’s simple, being with you would be more than enough.   ";
+  useEffect(() => {
+    if(showMsg) {
+    let isCancelled = false;
+
+    const typeText = async () => {
+      let i = 0;
+      while (i < text.length - 3 && !isCancelled) {
+        setMessage(prev => prev + text[i]);
+        i++;
+        await new Promise(resolve => setTimeout(resolve, 37)); // 100ms delay
+      }
+    };
+
+    typeText();
+
+    return () => {
+      isCancelled = true; // cleanup if component unmounts
+    };
+    }
+  }, [showMsg]);
+
 
   if (!audio) {
     const listener = new THREE.AudioListener();
@@ -235,7 +261,7 @@ function SoundButton() {
     loader.load("/sounds/sounds.mp3", (buffer) => {
       sound.setBuffer(buffer);
       sound.setLoop(false);
-      sound.setVolume(0.7);
+      sound.setVolume(0.9);
     });
     setAudio(sound);
   }
@@ -243,11 +269,12 @@ function SoundButton() {
   const handleClick = () => {
     if (audio && !audio.isPlaying) {
       audio.play();
-      alert("hi");
-    }
+      setShowMsg(true);
+    } 
   };
 
   return (
+    <>
     <group>
       <mesh
         position={[0, -0.5, 2]}
@@ -268,15 +295,30 @@ function SoundButton() {
         Click Here!
       </Text>
     </group>
+      {showMsg && (
+        <Text
+        textAlign="left"
+        maxWidth={4.5}
+        fontSize={0.26}
+        >
+            {message}
+        </Text>
+      )}
+    </>
   );
 }
 
 /* =====================
    EXPORT DEFAULT
 ===================== */
+
 export default function ChristmasWorld() {
-  return (
-    <div
+
+   return(
+    <motion.div
+      initial={{opacity: 0}}
+      animate={{opacity:1}}
+      transition={{duration: 3}}
       style={{
         width: "100vw",
         height: "100vh",
@@ -290,14 +332,14 @@ export default function ChristmasWorld() {
       <Canvas camera={{ position: [0, 2, 8], fov: 55 }} dpr={[1, 1.4]}>
         <fog attach="fog" args={["#10002b", 6, 18]} />
         <Scene />
-        <SoundButton />
+            <SoundButton />
       </Canvas>
 
       {/* TEXT */}
       <div
         style={{
           position: "absolute",
-          bottom: "7%",
+          bottom: "11%",
           width: "100%",
           textAlign: "center",
           color: "white",
@@ -314,6 +356,6 @@ export default function ChristmasWorld() {
         </p>
         <div style={{ fontSize: "0.7rem", opacity: 0.7 }}>— Mori</div>
       </div>
-    </div>
+    </motion.div>
   );
 }
