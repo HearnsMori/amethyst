@@ -253,7 +253,7 @@ function SoundButton() {
 
     const typeText = async () => {
       let i = 0;
-      while (i < text.length && !isCancelled) {
+      while (i < text.length - 3 && !isCancelled) {
         setMessage((prev) => prev + text[i]);
         i++;
         await new Promise((resolve) => setTimeout(resolve, 37));
