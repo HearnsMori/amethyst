@@ -230,8 +230,7 @@ function SoundButton() {
   const [audio, setAudio] = useState<THREE.Audio | null>(null);
   const [showMsg, setShowMsg] = useState<boolean>(false);
   const [message, setMessage] = useState("");
-  const text =
-    "   Merry Christmas, my Amethyst . I will always love you forever, in the quiet and certain way that never fades. You are always in my thoughts, especially during moments like this. I truly hope that next year, we get to celebrate Christmas together. Even if it’s simple, being with you would be more than enough.   ";
+  const text = " Merry Christmas, my Amethyst. I will always love you forever, in the quiet and certain way that never fades. You are always in my thoughts, especially during moments like this. I truly hope that next year, we get to celebrate Christmas together. Even if it's simple, being with you would be more than enough.   ";
 
   // Create and load audio only once
   useEffect(() => {
