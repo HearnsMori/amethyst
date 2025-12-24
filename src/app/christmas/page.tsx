@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { OrbitControls, Text } from "@react-three/drei"
-import { useRef, useMemo, useState } from "react"
-import * as THREE from "three"
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls, Text } from "@react-three/drei";
+import { useRef<any>, useMemo, useState } from "react";
+import * as THREE from "three";
 /* =====================
    SNOW PARTICLES (AIR)
 ===================== */
 function SnowParticles() {
-  const ref = useRef();
+  const ref = useRef<any>();
   const count = 1200;
 
   const positions = useMemo(() => {
@@ -61,8 +61,8 @@ function SnowGround() {
    CAT (CUSTOM GEOMETRY)
 ===================== */
 function Cat() {
-  const head = useRef();
-  const eyes = useRef([]);
+  const head = useRef<any>();
+  const eyes = useRef<any>([]);
 
   useFrame(({ clock }) => {
     head.current.rotation.y = Math.sin(clock.elapsedTime) * 0.2;
@@ -103,7 +103,7 @@ function Cat() {
    CHRISTMAS TREE
 ===================== */
 function ChristmasTree() {
-  const lights = useRef([]);
+  const lights = useRef<any>([]);
 
   useFrame(({ clock }) => {
     lights.current.forEach((l, i) => {
@@ -179,7 +179,7 @@ function DreamHouse() {
    FIREWORKS
 ===================== */
 function Fireworks() {
-  const ref = useRef();
+  const ref = useRef<any>();
   const count = 300;
 
   const positions = useMemo(() => {
