@@ -4,11 +4,12 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
 import { useRef, useMemo, useState } from "react";
 import * as THREE from "three";
+
 /* =====================
    SNOW PARTICLES (AIR)
 ===================== */
 function SnowParticles() {
-  const ref = useRef<any>(null);
+  const ref = useRef<THREE.Points>(null);
   const count = 1200;
 
   const positions = useMemo(() => {
@@ -19,11 +20,11 @@ function SnowParticles() {
       arr[i + 2] = (Math.random() - 0.5) * 25;
     }
     return arr;
-  }, [])
+  }, [count]);
 
   useFrame(() => {
-    ref.current.rotation.y += 0.0006;
-  })
+    if (ref.current) ref.current.rotation.y += 0.0006;
+  });
 
   return (
     <points ref={ref}>
@@ -37,7 +38,7 @@ function SnowParticles() {
       </bufferGeometry>
       <pointsMaterial size={0.05} color="white" transparent opacity={0.8} />
     </points>
-  )
+  );
 }
 
 /* =====================
@@ -54,22 +55,22 @@ function SnowGround() {
         emissiveIntensity={0.25}
       />
     </mesh>
-  )
+  );
 }
 
 /* =====================
    CAT (CUSTOM GEOMETRY)
 ===================== */
 function Cat() {
-  const head = useRef<any>(null);
-  const eyes = useRef<any>([]);
+  const head = useRef<THREE.Mesh>(null);
+  const eyes = useRef<THREE.Mesh[]>([]);
 
   useFrame(({ clock }) => {
-    head.current.rotation.y = Math.sin(clock.elapsedTime) * 0.2;
+    if (head.current) head.current.rotation.y = Math.sin(clock.elapsedTime) * 0.2;
     eyes.current.forEach((eye) => {
-      eye.scale.y = 0.8 + Math.sin(clock.elapsedTime * 4) * 0.2;
-    })
-  })
+      if (eye) eye.scale.y = 0.8 + Math.sin(clock.elapsedTime * 4) * 0.2;
+    });
+  });
 
   return (
     <group position={[-2, -1.2, -2]} scale={0.6}>
@@ -82,7 +83,7 @@ function Cat() {
       {[-0.2, 0.2].map((x, i) => (
         <mesh
           key={i}
-          ref={(el) => (eyes.current[i] = el)}
+          ref={(el) => (eyes.current[i] = el!)}
           position={[x, 0.1, 0.5]}
         >
           <sphereGeometry args={[0.08, 16, 16]} />
@@ -96,20 +97,18 @@ function Cat() {
         <meshStandardMaterial color="#9c6644" />
       </mesh>
     </group>
-  )
+  );
 }
 
 /* =====================
    CHRISTMAS TREE
 ===================== */
 function ChristmasTree() {
-  const lights = useRef<any>([]);
+  const lights = useRef<THREE.Mesh[]>([]);
 
   useFrame(({ clock }) => {
     lights.current.forEach((l, i) => {
-      if (l)
-        l.material.emissiveIntensity =
-          0.6 + Math.sin(clock.elapsedTime * 4 + i) * 0.5;
+      if (l) l.material.emissiveIntensity = 0.6 + Math.sin(clock.elapsedTime * 4 + i) * 0.5;
     });
   });
 
@@ -132,7 +131,7 @@ function ChristmasTree() {
         return (
           <mesh
             key={i}
-            ref={(el) => (lights.current[i] = el)}
+            ref={(el) => (lights.current[i] = el!)}
             position={[Math.cos(a) * r, y, Math.sin(a) * r]}
           >
             <sphereGeometry args={[0.05, 8, 8]} />
@@ -142,10 +141,10 @@ function ChristmasTree() {
               color="black"
             />
           </mesh>
-        )
+        );
       })}
     </group>
-  )
+  );
 }
 
 /* =====================
@@ -172,14 +171,14 @@ function DreamHouse() {
         </mesh>
       ))}
     </group>
-  )
+  );
 }
 
 /* =====================
    FIREWORKS
 ===================== */
 function Fireworks() {
-  const ref = useRef<any>(null);
+  const ref = useRef<THREE.Points>(null);
   const count = 300;
 
   const positions = useMemo(() => {
@@ -187,11 +186,11 @@ function Fireworks() {
     for (let i = 0; i < count * 3; i++) {
       arr[i] = (Math.random() - 0.5) * 15;
     }
-    return arrb
-  }, [])
+    return arr;
+  }, [count]);
 
   useFrame(({ clock }) => {
-    ref.current.rotation.y = clock.elapsedTime * 0.4;
+    if (ref.current) ref.current.rotation.y = clock.elapsedTime * 0.4;
   });
 
   return (
@@ -206,7 +205,7 @@ function Fireworks() {
       </bufferGeometry>
       <pointsMaterial size={0.08} color="#ffd166" opacity={0.8} />
     </points>
-  )
+  );
 }
 
 /* =====================
@@ -228,38 +227,37 @@ function Scene() {
 
       <OrbitControls enableZoom={false} enablePan={false} />
     </>
-  )
+  );
 }
 
 function SoundButton() {
   const { camera } = useThree();
-  const [audio, setAudio] = useState(null);
+  const [audio, setAudio] = useState<THREE.Audio | null>(null);
 
-  // Load sound only once
   if (!audio) {
     const listener = new THREE.AudioListener();
     camera.add(listener);
-    const sound = new THREE.Audio(listener)
-    const loader = new THREE.AudioLoader()
+    const sound = new THREE.Audio(listener);
+    const loader = new THREE.AudioLoader();
     loader.load("/sounds/sounds.mp3", (buffer) => {
       sound.setBuffer(buffer);
       sound.setLoop(false);
       sound.setVolume(0.7);
-    })
+    });
     setAudio(sound);
   }
 
   const handleClick = () => {
     if (audio && !audio.isPlaying) {
       audio.play();
-      alert('hi');
+      alert("hi");
     }
-  }
+  };
 
   return (
     <group>
       <mesh
-        position={[0, -0.5, 2]} // in front of camera
+        position={[0, -0.5, 2]}
         scale={[1.2, 0.4, 0.2]}
         onClick={handleClick}
       >
@@ -277,7 +275,7 @@ function SoundButton() {
         Click Here!
       </Text>
     </group>
-  )
+  );
 }
 
 /* =====================
@@ -296,10 +294,7 @@ export default function ChristmasWorld() {
         fontFamily: "Georgia, serif",
       }}
     >
-      <Canvas
-        camera={{ position: [0, 2, 8], fov: 55 }}
-        dpr={[1, 1.4]}
-      >
+      <Canvas camera={{ position: [0, 2, 8], fov: 55 }} dpr={[1, 1.4]}>
         <fog attach="fog" args={["#10002b", 6, 18]} />
         <Scene />
         <SoundButton />
@@ -320,11 +315,12 @@ export default function ChristmasWorld() {
           Merry Christmas
         </h1>
         <p style={{ fontSize: "0.85rem", opacity: 0.9 }}>
-          For <strong>Amethyst</strong><br />
+          For <strong>Amethyst</strong>
+          <br />
           Bethany Madison
         </p>
         <div style={{ fontSize: "0.7rem", opacity: 0.7 }}>— Mori</div>
       </div>
     </div>
-  )
+  );
 }
