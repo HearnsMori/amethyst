@@ -8,21 +8,21 @@ import * as THREE from "three"
    SNOW PARTICLES (AIR)
 ===================== */
 function SnowParticles() {
-  const ref = useRef()
-  const count = 1200
+  const ref = useRef();
+  const count = 1200;
 
   const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3)
+    const arr = new Float32Array(count * 3);
     for (let i = 0; i < count * 3; i += 3) {
-      arr[i] = (Math.random() - 0.5) * 25
-      arr[i + 1] = Math.random() * 10
-      arr[i + 2] = (Math.random() - 0.5) * 25
+      arr[i] = (Math.random() - 0.5) * 25;
+      arr[i + 1] = Math.random() * 10;
+      arr[i + 2] = (Math.random() - 0.5) * 25;
     }
-    return arr
+    return arr;
   }, [])
 
   useFrame(() => {
-    ref.current.rotation.y += 0.0006
+    ref.current.rotation.y += 0.0006;
   })
 
   return (
@@ -61,13 +61,13 @@ function SnowGround() {
    CAT (CUSTOM GEOMETRY)
 ===================== */
 function Cat() {
-  const head = useRef()
-  const eyes = useRef([])
+  const head = useRef();
+  const eyes = useRef([]);
 
   useFrame(({ clock }) => {
-    head.current.rotation.y = Math.sin(clock.elapsedTime) * 0.2
+    head.current.rotation.y = Math.sin(clock.elapsedTime) * 0.2;
     eyes.current.forEach((eye) => {
-      eye.scale.y = 0.8 + Math.sin(clock.elapsedTime * 4) * 0.2
+      eye.scale.y = 0.8 + Math.sin(clock.elapsedTime * 4) * 0.2;
     })
   })
 
@@ -103,15 +103,15 @@ function Cat() {
    CHRISTMAS TREE
 ===================== */
 function ChristmasTree() {
-  const lights = useRef([])
+  const lights = useRef([]);
 
   useFrame(({ clock }) => {
     lights.current.forEach((l, i) => {
       if (l)
         l.material.emissiveIntensity =
-          0.6 + Math.sin(clock.elapsedTime * 4 + i) * 0.5
-    })
-  })
+          0.6 + Math.sin(clock.elapsedTime * 4 + i) * 0.5;
+    });
+  });
 
   return (
     <group position={[0, -1.3, -3]} scale={0.9}>
@@ -124,10 +124,10 @@ function ChristmasTree() {
 
       {/* Lights */}
       {Array.from({ length: 80 }).map((_, i) => {
-        const a = Math.random() * Math.PI * 2
-        const r = 0.4 + Math.random() * 0.6
-        const y = Math.random() * 2 - 1
-        const colors = ["#ff4d6d", "#ffd166", "#4cc9f0", "#c77dff"]
+        const a = Math.random() * Math.PI * 2;
+        const r = 0.4 + Math.random() * 0.6;
+        const y = Math.random() * 2 - 1;
+        const colors = ["#ff4d6d", "#ffd166", "#4cc9f0", "#c77dff"];
 
         return (
           <mesh
@@ -179,20 +179,20 @@ function DreamHouse() {
    FIREWORKS
 ===================== */
 function Fireworks() {
-  const ref = useRef()
-  const count = 300
+  const ref = useRef();
+  const count = 300;
 
   const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3)
+    const arr = new Float32Array(count * 3);
     for (let i = 0; i < count * 3; i++) {
-      arr[i] = (Math.random() - 0.5) * 15
+      arr[i] = (Math.random() - 0.5) * 15;
     }
-    return arr
+    return arrb
   }, [])
 
   useFrame(({ clock }) => {
-    ref.current.rotation.y = clock.elapsedTime * 0.4
-  })
+    ref.current.rotation.y = clock.elapsedTime * 0.4;
+  });
 
   return (
     <points ref={ref}>
