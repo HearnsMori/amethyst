@@ -300,41 +300,6 @@ function SoundButton() {
   );
 }
 
-  return (
-    <>
-    <group>
-      <mesh
-        position={[0, -0.5, 2]}
-        scale={[1.2, 0.4, 0.2]}
-        onClick={handleClick}
-      >
-        <boxGeometry args={[1, 0.3, 0.2]} />
-        <meshStandardMaterial color="#ff69b4" />
-      </mesh>
-
-      <Text
-        position={[0, -0.48, 2.11]}
-        fontSize={0.1}
-        color="#fff"
-        anchorX="center"
-        anchorY="middle"
-      >
-        Click Here!
-      </Text>
-    </group>
-      {showMsg && (
-        <Text
-        textAlign="left"
-        maxWidth={4.5}
-        fontSize={0.26}
-        >
-            {message}
-        </Text>
-      )}
-    </>
-  );
-}
-
 /* =====================
    EXPORT DEFAULT
 ===================== */
