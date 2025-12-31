@@ -251,7 +251,7 @@ export default function LoveLocationPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { minHeight: "100vh", fontFamily: "sans-serif", color: "#fff" },
+  container: { minHeight: "100vh", fontFamily: "sans-serif", color: "#fff", background: "#111" },
   card: { position: "absolute", zIndex: 3, top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "90%", maxWidth: 420, background: "rgba(255,255,255,0.3)", borderRadius: 16, padding: 24, textAlign: "center", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" },
   title: { marginBottom: 8, fontSize: 24 },
   subtitle: { fontSize: 14, opacity: 0.9, marginBottom: 20 },
