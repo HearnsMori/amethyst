@@ -1,157 +1,278 @@
 "use client";
+// CSS
+import 'leaflet/dist/leaflet.css';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import dbStorage from "@/utils/dbstorage";
 
-export default function LocationSharePage() {
-  const PASSWORD = "Amethyst";
-  const AUTO_UPDATE_SECONDS = 15; // ⬅ change this anytime
+// Leaflet
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-  const [enteredPassword, setEnteredPassword] = useState("");
-  const [authorized, setAuthorized] = useState(false);
 
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
+const customIcon = L.icon({
+  iconUrl: '/leaflet/marker-icon.png',
+  iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+  shadowUrl: '/leaflet/marker-shadow.png',
+  iconSize: [25, 41], // default Leaflet size
+  iconAnchor: [12, 41], // point of the icon which will correspond to marker's location
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+
+
+type Mode = "locked" | "viewer" | "owner";
+
+export default function LoveLocationPage() {
+  const [mode, setMode] = useState<Mode>("locked");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [ucoords, setUCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const viewerInterval = useRef<NodeJS.Timeout | null>(null);
+  const ownerInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  //load map in client
+  const [isClient, setIsClient] = useState<boolean>(false);
 
-  /* =====================
-     PASSWORD CHECK
-  ===================== */
-  const handleLogin = () => {
-    if (enteredPassword === PASSWORD) {
-      setAuthorized(true);
-      setError(null);
-    } else {
-      setError("Incorrect password.");
-    }
-  };
-
-  /* =====================
-     GET YOUR LOCATION
-  ===================== */
-  const updateLocation = () => {
-    if (!navigator.geolocation) {
-      setError("Geolocation not supported.");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLatitude(pos.coords.latitude);
-        setLongitude(pos.coords.longitude);
-        setLastUpdated(new Date().toLocaleTimeString());
-        setLoading(false);
-      },
-      () => {
-        setError("Location permission denied.");
-        setLoading(false);
-      },
-      { enableHighAccuracy: true }
-    );
-  };
-
-  /* =====================
-     AUTO UPDATE
-  ===================== */
   useEffect(() => {
-    if (!authorized) return;
+    setIsClient(true);
+  }, []);
 
-    updateLocation(); // initial fetch
+  const signin = async () => {
+    await dbStorage.signin("2026", "2026");
+  };
 
-    const interval = setInterval(() => {
+  const unlock = async () => {
+    try {
+      setError("");
+      if (!localStorage.getItem("accessToken")) {
+        await signin();
+      }
+
+      if (password === "Amethyst") setMode("viewer");
+      else if (password === "Mori137") setMode("owner");
+      else throw new Error("Wrong password");
+    } catch (e: any) {
+      setError(e.message || "Access denied");
+    }
+  };
+
+  const updateLocation = () => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const payload = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await dbStorage.setItem("love", "location", "mori", "current", JSON.stringify(payload));
+
+      setCoords({ lat: payload.lat, lng: payload.lng });
+      setLastUpdated(payload.updatedAt);
+    });
+  };
+
+  const updateULocation = () => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const payload = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        updatedAt: new Date().toISOString(),
+      };
+      setUCoords({ lat: payload.lat, lng: payload.lng });
+    });
+  };
+
+  const fetchLocation = async () => {
+    const data = await dbStorage.getItem("love", "location", "mori", "current", null);
+    //alert(JSON.stringify(data));
+    if (data?.love.location.current) {
+      const parsed = JSON.parse(data.love.location.current);
+      setCoords({
+        lat: parsed.lat,
+        lng: parsed.lng,
+      });
+      setLastUpdated(parsed.updatedAt);
+    }
+  };
+
+  useEffect(() => {
+    if (mode === "viewer") {
+      fetchLocation();
+      updateULocation();
+      viewerInterval.current = setInterval(fetchLocation, 1000);
+      viewerInterval.current = setInterval(updateULocation, 1000);
+    }
+
+    if (mode === "owner") {
       updateLocation();
-    }, AUTO_UPDATE_SECONDS * 1000);
+      ownerInterval.current = setInterval(updateLocation, 60000);
+    }
 
-    return () => clearInterval(interval);
-  }, [authorized]);
+    return () => {
+      if (viewerInterval.current) clearInterval(viewerInterval.current);
+      if (ownerInterval.current) clearInterval(ownerInterval.current);
+    };
+  }, [mode]);
 
-  /* =====================
-     PASSWORD SCREEN
-  ===================== */
-  if (!authorized) {
-    return (
-      <main style={styles.center}>
-        <h2>Enter Password</h2>
-        <input
-          type="password"
-          placeholder="Password"
-          value={enteredPassword}
-          onChange={(e) => setEnteredPassword(e.target.value)}
-          style={styles.input}
-        />
-        <button onClick={handleLogin} style={styles.button}>
-          Unlock
-        </button>
-        {error && <p style={styles.error}>{error}</p>}
-      </main>
-    );
-  }
-
-  /* =====================
-     LOCATION VIEW
-  ===================== */
   return (
-    <main style={styles.center}>
-      <h2>Your Live Location</h2>
+    <div style={styles.container}>
+      {mode === "locked" && (
+        <div style={styles.card}>
+          <h1 style={styles.title}>🎆 Happy New Year</h1>
+          <p style={styles.subtitle}>A small gift so you always know where I am.</p>
 
-      <p style={{ opacity: 0.7 }}>
-        Auto-updates every {AUTO_UPDATE_SECONDS} seconds
-      </p>
+          <input
+            type="password"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={styles.input}
+          />
 
-      <button onClick={updateLocation} style={styles.button}>
-        {loading ? "Updating..." : "Update Now"}
-      </button>
+          <button onClick={unlock} style={styles.button}>Open</button>
 
-      {latitude && longitude && (
-        <div style={{ marginTop: 20 }}>
-          <p><strong>Latitude:</strong> {latitude}</p>
-          <p><strong>Longitude:</strong> {longitude}</p>
-          <p><strong>Last updated:</strong> {lastUpdated}</p>
-
-          <a
-            href={`https://www.google.com/maps?q=${latitude},${longitude}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open in Google Maps
-          </a>
+          {error && <p style={styles.error}>{error}</p>}
         </div>
       )}
 
-      {error && <p style={styles.error}>{error}</p>}
-    </main>
+      {mode !== "locked" && (
+        <div style={styles.fullScreen}>
+          {(isClient && ucoords && coords) ? (
+            <MapContainer
+              center={[coords.lat, coords.lng]}
+              zoom={13}
+              style={{ width: "100%", height: "100%" }}
+              scrollWheelZoom={false}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+
+              <Marker position={[coords.lat, coords.lng]} icon={customIcon}>
+                <Popup>Mori is here 💖</Popup>
+                <Tooltip direction="bottom" offset={[0, 10]} permanent>
+                  Mori
+                </Tooltip>
+              </Marker>
+
+              <Marker position={[ucoords.lat, ucoords.lng]} icon={customIcon}>
+                <Popup>You are here 📍</Popup>
+                <Tooltip direction="bottom" offset={[0, 10]} permanent>
+                  You
+                </Tooltip>
+              </Marker>
+
+              {/* Optional: draw a line between the two */}
+              <Polyline positions={[[ucoords.lat, ucoords.lng], [coords.lat, coords.lng]]} color="red" />
+            </MapContainer>
+          ) : (
+            <p style={styles.loading}>Waiting for location…</p>
+          )}
+
+
+
+
+          <div style={styles.overlay}>
+            <h2 style={{ margin: 0 }}>
+              {mode === "viewer" ? "💖 Mori is here" : "📍 Updating your location"}
+            </h2>
+            {lastUpdated && (
+              <p style={styles.info}>Last updated: {new Date(lastUpdated).toLocaleString()}</p>
+            )}
+            {mode === "owner" && (
+              <button onClick={updateLocation} style={styles.button}>Update Now</button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-/* =====================
-   SIMPLE STYLES
-===================== */
 const styles: Record<string, React.CSSProperties> = {
-  center: {
+  container: {
     minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 12,
+    fontFamily: "sans-serif",
+    color: "#fff",
+  },
+  card: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "90%",
+    maxWidth: 420,
+    background: "rgba(255,255,255,0.08)",
+    borderRadius: 16,
+    padding: 24,
     textAlign: "center",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+  },
+  title: {
+    marginBottom: 8,
+    fontSize: 24,
+  },
+  subtitle: {
+    fontSize: 14,
+    opacity: 0.9,
+    marginBottom: 20,
   },
   input: {
-    padding: 10,
+    width: "100%",
+    padding: 12,
+    borderRadius: 8,
+    border: "none",
+    marginBottom: 12,
     fontSize: 16,
-    width: 220,
   },
   button: {
-    padding: "10px 20px",
-    fontSize: 16,
+    width: "100%",
+    padding: 12,
+    borderRadius: 8,
+    border: "none",
+    background: "#ff7eb3",
+    color: "#000",
+    fontWeight: 600,
     cursor: "pointer",
+    marginTop: 10,
   },
   error: {
-    color: "red",
+    marginTop: 10,
+    color: "#ffb4b4",
+  },
+  info: {
+    marginTop: 5,
+    fontSize: 13,
+    opacity: 0.85,
+  },
+  loading: {
+    textAlign: "center",
+    marginTop: "50%",
+    fontSize: 18,
+  },
+  fullScreen: {
+    position: "relative",
+    width: "100vw",
+    height: "100vh",
+  },
+  overlay: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    right: 16,
+    background: "rgba(0,0,0,0.5)",
+    padding: 12,
+    borderRadius: 12,
+    textAlign: "center",
   },
 };
