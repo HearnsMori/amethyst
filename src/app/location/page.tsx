@@ -2,6 +2,47 @@
 // CSS
 import 'leaflet/dist/leaflet.css';
 
+// Fireworks
+import { Fireworks } from '@fireworks-js/react'
+import type { FireworksHandlers } from '@fireworks-js/react'
+
+function FireWorks() {
+  const ref = useRef<FireworksHandlers>(null)
+
+  return (
+    <div style={{ position: 'absolute', left: 0, width: '100vw', height: '100vh', background: '#000', margin: 0, padding: 0, overflow: 'hidden', zIndex: -1 }}>
+      <Fireworks
+        ref={ref}
+        options={{
+          // Specific Amethyst/Purple palette
+          rocketsPoint: { min: 0, max: 100 },
+          hue: { min: 210, max: 350 }, // 💜 purple spectrum
+          delay: { min: 15, max: 30 },
+          // Adjusting these for a "magical" feel
+          traceLength: 3,
+          flickering: 50,
+          opacity: 0.5,
+          acceleration: 1.05,
+          friction: 0.97,
+          gravity: 1.5,
+          particles: 73,
+          explosion: 11,
+          intensity: 50,
+        }}
+        style={{
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '120vh',
+          position: 'fixed',
+          background: 'transparent',
+          bottom: "-20vh",
+        }}
+      />
+    </div>
+  )
+}
+
 import { useEffect, useState, useRef } from "react";
 import dbStorage from "@/utils/dbstorage";
 
@@ -19,6 +60,32 @@ export default function LoveLocationPage() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const viewerInterval = useRef<NodeJS.Timeout | null>(null);
   const ownerInterval = useRef<NodeJS.Timeout | null>(null);
+  const [moriAddress, setMoriAddress] = useState<string>("");
+  const [userAddress, setUserAddress] = useState<string>("");
+
+  const getAddress = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+      );
+      const data = await res.json();
+      return data.display_name || "";
+    } catch {
+      return "";
+    }
+  };
+
+  useEffect(() => {
+    if (coords) {
+      getAddress(coords.lat, coords.lng).then(setMoriAddress);
+    }
+    if (ucoords) {
+      getAddress(ucoords.lat, ucoords.lng).then(setUserAddress);
+    }
+  }, [coords, ucoords]);
+
+
+
 
   // Client-only flag
   const [isClient, setIsClient] = useState(false);
@@ -111,7 +178,7 @@ export default function LoveLocationPage() {
     });
 
     return (
-      <MapContainer center={[coords.lat, coords.lng]} zoom={13} style={{ width: "100%", height: "100%" }} scrollWheelZoom={false}>
+      <MapContainer style={{ flex: '1', width: '100%', height: "90vh" }} center={[coords.lat, coords.lng]} zoom={12.5} scrollWheelZoom={false}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -119,12 +186,12 @@ export default function LoveLocationPage() {
 
         <Marker position={[coords.lat, coords.lng]} icon={customIcon}>
           <Popup>Mori is here 💖</Popup>
-          <Tooltip direction="bottom" offset={[0, 10]} permanent>Mori</Tooltip>
+          <Tooltip direction="bottom" offset={[0, 10]} permanent>Mori: {moriAddress || ""}</Tooltip>
         </Marker>
 
         <Marker position={[ucoords.lat, ucoords.lng]} icon={customIcon}>
           <Popup>You are here 📍</Popup>
-          <Tooltip direction="bottom" offset={[0, 10]} permanent>You</Tooltip>
+          <Tooltip direction="bottom" offset={[0, 10]} permanent>You: {userAddress || ""}</Tooltip>
         </Marker>
 
         <Polyline positions={[[ucoords.lat, ucoords.lng], [coords.lat, coords.lng]]} color="red" />
@@ -134,34 +201,38 @@ export default function LoveLocationPage() {
 
   return (
     <div style={styles.container}>
+
       {mode === "locked" ? (
-        <div style={styles.card}>
-          <h1 style={styles.title}>🎆 Happy New Year</h1>
-          <p style={styles.subtitle}>A small gift so you always know where I am.</p>
+        <>
+          <FireWorks />
+          <div style={styles.card}>
 
-          <input
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-          />
+            <h1 style={styles.title}>🎆 Happy New Year</h1>
+            <p style={styles.subtitle}>A small gift so you always know where I am.</p>
 
-          <button onClick={unlock} style={styles.button}>Open</button>
+            <input
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={styles.input}
+            />
 
-          {error && <p style={styles.error}>{error}</p>}
-        </div>
+            <button onClick={unlock} style={styles.button}>Open</button>
+
+            {error && <p style={styles.error}>{error}</p>}
+          </div>
+        </>
       ) : (
         <div style={styles.fullScreen}>
-          {coords && ucoords ? renderMap() : <p style={styles.loading}>Waiting for location…</p>}
-
           <div style={styles.overlay}>
-            <h2 style={{ margin: 0, zIndex: 5, }}>
-              {mode === "viewer" ? "💖 Mori is here" : "📍 Updating your location"}
+            <h2 style={{ margin: 0, }}>
+              {mode === "viewer" ? "Mori is here" : "📍 Updating your location"}
             </h2>
             {lastUpdated && <p style={styles.info}>Last updated: {new Date(lastUpdated).toLocaleString()}</p>}
             {mode === "owner" && <button onClick={updateLocation} style={styles.button}>Update Now</button>}
           </div>
+          {coords && ucoords ? renderMap() : <p style={styles.loading}>Waiting for location…</p>}
         </div>
       )}
     </div>
@@ -178,6 +249,6 @@ const styles: Record<string, React.CSSProperties> = {
   error: { marginTop: 10, color: "#ffb4b4" },
   info: { marginTop: 5, fontSize: 13, opacity: 0.85 },
   loading: { textAlign: "center", marginTop: "50%", fontSize: 18 },
-  fullScreen: { position: "relative", width: "100vw", height: "100vh" },
-  overlay: { position: "absolute", top: 16, left: 16, right: 16, background: "rgba(0,0,0,0.5)", padding: 12, borderRadius: 12, textAlign: "center" },
+  fullScreen: { position: "relative", width: "100vw", height: "100vh", display: "flex", flexFlow: "column", justifyContent: "center", alignItems: "center" },
+  overlay: { height: "10vh", zIndex: 5, top: 16, left: 16, right: 16, background: "rgba(0,0,0,0.5)", padding: 12, borderRadius: 12, textAlign: "center" },
 };
