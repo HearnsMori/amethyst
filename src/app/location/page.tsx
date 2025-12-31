@@ -5,23 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef } from "react";
 import dbStorage from "@/utils/dbstorage";
 
-// Leaflet
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-
-const customIcon = L.icon({
-  iconUrl: '/leaflet/marker-icon.png',
-  iconRetinaUrl: '/leaflet/marker-icon-2x.png',
-  shadowUrl: '/leaflet/marker-shadow.png',
-  iconSize: [25, 41], // default Leaflet size
-  iconAnchor: [12, 41], // point of the icon which will correspond to marker's location
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-
+// Leaflet (only import types; actual usage inside client-only code)
+import type { MapContainerProps } from 'react-leaflet';
 
 type Mode = "locked" | "viewer" | "owner";
 
@@ -35,12 +20,9 @@ export default function LoveLocationPage() {
   const viewerInterval = useRef<NodeJS.Timeout | null>(null);
   const ownerInterval = useRef<NodeJS.Timeout | null>(null);
 
-  //load map in client
-  const [isClient, setIsClient] = useState<boolean>(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // Client-only flag
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
 
   const signin = async () => {
     await dbStorage.signin("2026", "2026");
@@ -49,9 +31,7 @@ export default function LoveLocationPage() {
   const unlock = async () => {
     try {
       setError("");
-      if (!localStorage.getItem("accessToken")) {
-        await signin();
-      }
+      if (!localStorage.getItem("accessToken")) await signin();
 
       if (password === "Amethyst") setMode("viewer");
       else if (password === "Mori137") setMode("owner");
@@ -70,9 +50,7 @@ export default function LoveLocationPage() {
         lng: pos.coords.longitude,
         updatedAt: new Date().toISOString(),
       };
-
       await dbStorage.setItem("love", "location", "mori", "current", JSON.stringify(payload));
-
       setCoords({ lat: payload.lat, lng: payload.lng });
       setLastUpdated(payload.updatedAt);
     });
@@ -81,25 +59,16 @@ export default function LoveLocationPage() {
   const updateULocation = () => {
     if (!navigator.geolocation) return;
 
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const payload = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        updatedAt: new Date().toISOString(),
-      };
-      setUCoords({ lat: payload.lat, lng: payload.lng });
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setUCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
     });
   };
 
   const fetchLocation = async () => {
     const data = await dbStorage.getItem("love", "location", "mori", "current", null);
-    //alert(JSON.stringify(data));
     if (data?.love.location.current) {
       const parsed = JSON.parse(data.love.location.current);
-      setCoords({
-        lat: parsed.lat,
-        lng: parsed.lng,
-      });
+      setCoords({ lat: parsed.lat, lng: parsed.lng });
       setLastUpdated(parsed.updatedAt);
     }
   };
@@ -123,9 +92,49 @@ export default function LoveLocationPage() {
     };
   }, [mode]);
 
+  // Render Leaflet map **only on client**
+  const renderMap = () => {
+    if (!isClient || !coords || !ucoords) return null;
+
+    // Lazy-load Leaflet here
+    const { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip } = require('react-leaflet');
+    const L = require('leaflet');
+
+    const customIcon = L.icon({
+      iconUrl: '/leaflet/marker-icon.png',
+      iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+      shadowUrl: '/leaflet/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
+
+    return (
+      <MapContainer center={[coords.lat, coords.lng]} zoom={13} style={{ width: "100%", height: "100%" }} scrollWheelZoom={false}>
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+
+        <Marker position={[coords.lat, coords.lng]} icon={customIcon}>
+          <Popup>Mori is here 💖</Popup>
+          <Tooltip direction="bottom" offset={[0, 10]} permanent>Mori</Tooltip>
+        </Marker>
+
+        <Marker position={[ucoords.lat, ucoords.lng]} icon={customIcon}>
+          <Popup>You are here 📍</Popup>
+          <Tooltip direction="bottom" offset={[0, 10]} permanent>You</Tooltip>
+        </Marker>
+
+        <Polyline positions={[[ucoords.lat, ucoords.lng], [coords.lat, coords.lng]]} color="red" />
+      </MapContainer>
+    );
+  };
+
   return (
     <div style={styles.container}>
-      {mode === "locked" && (
+      {mode === "locked" ? (
         <div style={styles.card}>
           <h1 style={styles.title}>🎆 Happy New Year</h1>
           <p style={styles.subtitle}>A small gift so you always know where I am.</p>
@@ -142,56 +151,16 @@ export default function LoveLocationPage() {
 
           {error && <p style={styles.error}>{error}</p>}
         </div>
-      )}
-
-      {mode !== "locked" && (
+      ) : (
         <div style={styles.fullScreen}>
-          {(isClient && ucoords && coords) ? (
-            <MapContainer
-              center={[coords.lat, coords.lng]}
-              zoom={13}
-              style={{ width: "100%", height: "100%" }}
-              scrollWheelZoom={false}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-
-              <Marker position={[coords.lat, coords.lng]} icon={customIcon}>
-                <Popup>Mori is here 💖</Popup>
-                <Tooltip direction="bottom" offset={[0, 10]} permanent>
-                  Mori
-                </Tooltip>
-              </Marker>
-
-              <Marker position={[ucoords.lat, ucoords.lng]} icon={customIcon}>
-                <Popup>You are here 📍</Popup>
-                <Tooltip direction="bottom" offset={[0, 10]} permanent>
-                  You
-                </Tooltip>
-              </Marker>
-
-              {/* Optional: draw a line between the two */}
-              <Polyline positions={[[ucoords.lat, ucoords.lng], [coords.lat, coords.lng]]} color="red" />
-            </MapContainer>
-          ) : (
-            <p style={styles.loading}>Waiting for location…</p>
-          )}
-
-
-
+          {coords && ucoords ? renderMap() : <p style={styles.loading}>Waiting for location…</p>}
 
           <div style={styles.overlay}>
-            <h2 style={{ margin: 0 }}>
+            <h2 style={{ margin: 0, zIndex: 5, }}>
               {mode === "viewer" ? "💖 Mori is here" : "📍 Updating your location"}
             </h2>
-            {lastUpdated && (
-              <p style={styles.info}>Last updated: {new Date(lastUpdated).toLocaleString()}</p>
-            )}
-            {mode === "owner" && (
-              <button onClick={updateLocation} style={styles.button}>Update Now</button>
-            )}
+            {lastUpdated && <p style={styles.info}>Last updated: {new Date(lastUpdated).toLocaleString()}</p>}
+            {mode === "owner" && <button onClick={updateLocation} style={styles.button}>Update Now</button>}
           </div>
         </div>
       )}
@@ -200,79 +169,15 @@ export default function LoveLocationPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: "100vh",
-    fontFamily: "sans-serif",
-    color: "#fff",
-  },
-  card: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "90%",
-    maxWidth: 420,
-    background: "rgba(255,255,255,0.08)",
-    borderRadius: 16,
-    padding: 24,
-    textAlign: "center",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
-  },
-  title: {
-    marginBottom: 8,
-    fontSize: 24,
-  },
-  subtitle: {
-    fontSize: 14,
-    opacity: 0.9,
-    marginBottom: 20,
-  },
-  input: {
-    width: "100%",
-    padding: 12,
-    borderRadius: 8,
-    border: "none",
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  button: {
-    width: "100%",
-    padding: 12,
-    borderRadius: 8,
-    border: "none",
-    background: "#ff7eb3",
-    color: "#000",
-    fontWeight: 600,
-    cursor: "pointer",
-    marginTop: 10,
-  },
-  error: {
-    marginTop: 10,
-    color: "#ffb4b4",
-  },
-  info: {
-    marginTop: 5,
-    fontSize: 13,
-    opacity: 0.85,
-  },
-  loading: {
-    textAlign: "center",
-    marginTop: "50%",
-    fontSize: 18,
-  },
-  fullScreen: {
-    position: "relative",
-    width: "100vw",
-    height: "100vh",
-  },
-  overlay: {
-    position: "absolute",
-    top: 16,
-    left: 16,
-    right: 16,
-    background: "rgba(0,0,0,0.5)",
-    padding: 12,
-    borderRadius: 12,
-    textAlign: "center",
-  },
+  container: { minHeight: "100vh", fontFamily: "sans-serif", color: "#fff" },
+  card: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "90%", maxWidth: 420, background: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 24, textAlign: "center", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" },
+  title: { marginBottom: 8, fontSize: 24 },
+  subtitle: { fontSize: 14, opacity: 0.9, marginBottom: 20 },
+  input: { width: "100%", padding: 12, borderRadius: 8, border: "none", marginBottom: 12, fontSize: 16 },
+  button: { width: "100%", padding: 12, borderRadius: 8, border: "none", background: "#ff7eb3", color: "#000", fontWeight: 600, cursor: "pointer", marginTop: 10 },
+  error: { marginTop: 10, color: "#ffb4b4" },
+  info: { marginTop: 5, fontSize: 13, opacity: 0.85 },
+  loading: { textAlign: "center", marginTop: "50%", fontSize: 18 },
+  fullScreen: { position: "relative", width: "100vw", height: "100vh" },
+  overlay: { position: "absolute", top: 16, left: 16, right: 16, background: "rgba(0,0,0,0.5)", padding: 12, borderRadius: 12, textAlign: "center" },
 };
