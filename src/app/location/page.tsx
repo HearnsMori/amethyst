@@ -1,16 +1,25 @@
 "use client";
 // CSS
 import 'leaflet/dist/leaflet.css';
+import { useEffect, useState, useRef } from "react";
 
 // Fireworks
 import { Fireworks } from '@fireworks-js/react'
 import type { FireworksHandlers } from '@fireworks-js/react'
 
 function FireWorks() {
-  const ref = useRef<FireworksHandlers>(null)
+  const ref = useRef<FireworksHandlers>(null);
+  const [timer, setTimer] = useState<boolean>(true);
+
+  useEffect(() => {
+    setTimeout(() => {
+        setTimer(false);
+    }, 21000);
+  }, []);
 
   return (
-    <div style={{ position: 'absolute', left: 0, width: '100vw', height: '100vh', background: '#000', margin: 0, padding: 0, overflow: 'hidden', zIndex: -1 }}>
+    timer && (
+    <div style={{ position: 'absolute', left: 0, width: '100vw', height: '100vh', background: '#00000000', margin: 0, padding: 0, overflow: 'hidden', zIndex: 1 }}>
       <Fireworks
         ref={ref}
         options={{
@@ -40,11 +49,12 @@ function FireWorks() {
         }}
       />
     </div>
+    )
   )
 }
 
-import { useEffect, useState, useRef } from "react";
 import dbStorage from "@/utils/dbstorage";
+import Temple from "@/components/Temple";
 
 // Leaflet (only import types; actual usage inside client-only code)
 import type { MapContainerProps } from 'react-leaflet';
@@ -205,6 +215,7 @@ export default function LoveLocationPage() {
       {mode === "locked" ? (
         <>
           <FireWorks />
+          <Temple />
           <div style={styles.card}>
 
             <h1 style={styles.title}>🎆 Happy New Year</h1>
@@ -241,7 +252,7 @@ export default function LoveLocationPage() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: { minHeight: "100vh", fontFamily: "sans-serif", color: "#fff" },
-  card: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "90%", maxWidth: 420, background: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 24, textAlign: "center", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" },
+  card: { position: "absolute", zIndex: 3, top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "90%", maxWidth: 420, background: "rgba(255,255,255,0.3)", borderRadius: 16, padding: 24, textAlign: "center", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" },
   title: { marginBottom: 8, fontSize: 24 },
   subtitle: { fontSize: 14, opacity: 0.9, marginBottom: 20 },
   input: { width: "100%", padding: 12, borderRadius: 8, border: "none", marginBottom: 12, fontSize: 16 },
