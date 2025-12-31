@@ -54,7 +54,7 @@ function FireWorks() {
 }
 
 import dbStorage from "@/utils/dbstorage";
-import Temple from "@/components/Temple";
+//import Temple from "@/components/Temple";
 
 // Leaflet (only import types; actual usage inside client-only code)
 import type { MapContainerProps } from 'react-leaflet';
@@ -215,7 +215,7 @@ export default function LoveLocationPage() {
       {mode === "locked" ? (
         <>
           <FireWorks />
-          <Temple />
+          {/*<Temple />*/}
           <div style={styles.card}>
 
             <h1 style={styles.title}>🎆 Happy New Year</h1>
