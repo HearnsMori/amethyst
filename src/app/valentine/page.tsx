@@ -319,7 +319,6 @@ export default function UltimateValentinePage() {
             style={{
               position: "absolute",
               right: "0vw",
-              borderSizing: "border-box",
               width: p.size,
               height: p.size,
               left: `${Math.random()*98}vw`,
