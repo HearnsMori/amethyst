@@ -108,7 +108,7 @@ export default function LoveLocationPage() {
   const unlock = async () => {
     try {
       setError("");
-      if (!localStorage.getItem("accessToken")) await signin();
+      await signin();
 
       if (password === "Amethyst") setMode("viewer");
       else if (password === "Mori137") setMode("owner");
