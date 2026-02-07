@@ -56,7 +56,6 @@ function RoseDayPage() {
         fontFamily: "serif",
         boxSizing: "border-box",
         justifyContent: "left",
-        alignText: "left",
         alignItems: "left",
       }}
     >
