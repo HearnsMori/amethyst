@@ -127,7 +127,7 @@ export default function LoveLocationPage() {
         lng: pos.coords.longitude,
         updatedAt: new Date().toISOString(),
       };
-      await dbStorage.setItem("love", "location", "mori", "current", JSON.stringify(payload));
+      await dbStorage.setItem("love", "location", "mori", "current", JSON.stringify(payload), ["#all"], ["#all"], ["#all"] );
       setCoords({ lat: payload.lat, lng: payload.lng });
       setLastUpdated(payload.updatedAt);
     });
